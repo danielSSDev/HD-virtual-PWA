@@ -1,18 +1,35 @@
 import { app } from '../../firebase';
 import getPath from './path';
+import { UserClass } from '../../auth/user';
 
 export default function(file, name){
     let path = getPath();
     const storageRef = app.storage().ref();
-    let fileRef = storageRef.child('files/1' + path + name);
+
+    let userInstance = new UserClass;
+
+    let fileRef = storageRef.child('files/' + userInstance.user.uid + path + name);
     fileRef.put(file).then((snapshot) => {
         snapshot.ref.getDownloadURL().then(function(downloadURL){
-            let folderRef = app.database().ref('files/1' + path);
+            let folderRef = app.database().ref('files/' + userInstance.user.uid + path);
+
             folderRef.push({
                 type: 'file',
                 title: name,
-                url: downloadURL
+                url: downloadURL,
+                size: snapshot.totalBytes
             })
+
+            let totalBytes = snapshot.totalBytes;
+
+            let userRef = app.database().ref('/users/' + userInstance.user.uid + '/usage');
+
+            userRef.once('value', (snapshot) => {
+                let size = snapshot.val() || 0;
+                userRef.set(totalBytes + size);
+            }, err => console.log(err));
         })
     })
 }
+
+1073741824

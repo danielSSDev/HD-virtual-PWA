@@ -1,28 +1,44 @@
+import FileLoader from 'file-loader';
+
 export default function (snapshot){
     let data = snapshot.val();
+
+    if(!data){
+        document.querySelector('#main .files').innerHTML = 'Nenhum diretorio ou arquivo encontrado...'
+        return;
+    }
+
+
     data = Object.entries(data);
     
     let partial = require('./partial.html');
 
-    data.sort((a, b) => {
-        if(typeof a[1] != 'object'){
-            return true;
-        }
-        return a[1].title.localeCompare(b[1].title)
-    });
+    let file = [];
+    let folder = [];
 
-    data.sort((a, b) => {
-        if(typeof a[1] != 'object'){
-            return true;
+    data.forEach((item, key) => {
+        if(typeof item[1] !== 'object'){
+            data.splice(key);
         }
-        return a[1].type < b[1].type
-    });
+
+        if(item[1].type == 'folder-open'){
+            folder.push(item);
+        }else{
+            file.push(item);
+        }
+    })
+
+    file.sort((a, b) => console.log('funciona aqui'));
+    folder.sort((a, b) => a[1].title.localeCompare(b[1].title));
+
+    data = folder.concat(file);
 
     let html = '';
     for (let index in data){
         if(typeof data[index][1] != 'object'){
             continue;
         }
+        
         html += partial
         .replace(/{{ fid }}/g, data[index][0])
         .replace(/{{ title }}/g, data[index][1].title)
